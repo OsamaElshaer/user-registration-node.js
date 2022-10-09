@@ -1,12 +1,17 @@
 //Import Express
 const express = require("express");
 const app = express();
+const { User } = require("./models/User");
+//db connetion
+let { dbConnection } = require("./config/database");
 
-const methodOverride = require("method-override");
+//dotenv
+require("dotenv").config();
 
 //Import the main Passport and Express-Session library
 const passport = require("passport");
 const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
 
 //Import the secondary "Strategy" library
 const LocalStrategy = require("passport-local").Strategy;
@@ -14,59 +19,55 @@ const LocalStrategy = require("passport-local").Strategy;
 //tempalte engine
 app.set("view engine", "ejs");
 
+// require methods
+const authRouter = require("./routes/auth");
 
 //config passport
+
 // The "authUser" is a function that we will define later will contain the steps to authenticate a user, and will return the "authenticated user".
-const {authUser} = require('./config/passport')
-passport.use(new LocalStrategy (authUser))
+const { authUser } = require("./config/passport");
+passport.use(new LocalStrategy(authUser));
 
 passport.serializeUser((user, done) => {
-  console.log(`--------> Serialize User`);
-  console.log(user);
-
-  done(null, user.id);
-
-  // Passport will pass the authenticated_user to serializeUser as "user"
-  // This is the USER object from the done() in auth function
-  // Now attach using done (null, user.id) tie this user to the req.session.passport.user = {id: user.id},
-  // so that it is tied to the session object
+  done(null, user);
 });
 
-passport.deserializeUser((id, done) => {
-  console.log("---------> Deserialize Id");
-  console.log(id);
-
-  done(null, findBy('id',id));
-
-  // This is the id that is saved in req.session.passport.{ user: "id"} during the serialization
-  // use the id to find the user in the DB and get the user object with user details
-  // pass the USER object in the done() of the de-serializer
-  // this USER object is attached to the "req.user", and can be used anywhere in the App.
-}); 
-
-
-//routes
-const authRouter = require("./routes/auth");
-const { findBy } = require("./models/auth");
+passport.deserializeUser((user, done) => {
+  done(null, user);
+});
 
 //middleware
 app.use(express.urlencoded({ extended: true }));
 
+let store = new MongoDBStore({
+  uri: "mongodb://localhost:27017/userManagment",
+  collection: "session",
+});
+
 // This is the basic express session({..}) initialization.
 app.use(
   session({
-    secret: "secret",
-    resave: false,
-    saveUninitialized: true,
+    secret: "my secret",
+    store: store,
+    resave: false, //if true, will not save session on every req sent and it will save it if there are modifid
+    saveUninitialized: true, //if false, will not save uninitialized session (when it is new but not modified.) useful for implementing login sessions, if logedIn:true not modifie on session it will not save it.
+    cookie: {
+      secure: false, //will not send cookie if browser dose not have https connection
+      httpOnly: false, // if true, will disallow client side javascript from reading cookie in document.cookie
+      expires: new Date(Date.now() + 60 * 60 * 1000), //1h
+    },
   })
 );
-
-// init passport on every route call.
+// This is the basic express session({..}) initialization.
 app.use(passport.initialize());
-
-// allow passport to use "express-session".
+// init passport on every route call.
 app.use(passport.session());
+// allow passport to use "express-session".
 
+//routes
 app.use("/", authRouter);
 
-app.listen(3000);
+dbConnection((database) => {
+  // console.log(database)
+  app.listen(3000);
+});
