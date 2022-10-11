@@ -5,7 +5,7 @@ const router = require("express").Router();
 
 const {
   logIn,
-  postLogIn,
+  postLogin,
   index,
   logOut,
   signUP,
@@ -24,7 +24,7 @@ router
     body("password", "password is not valid")
       .isLength({ max: 8 })
       .isAlphanumeric(),
-    postLogIn,
+    postLogin,
     checkLoggedIn,
     passport.authenticate("local", {
       successRedirect: "/",
@@ -64,4 +64,4 @@ router.get("/", checkAuthenticated, index);
 
 router.post("/logout", checkAuthenticated, logOut);
 
-module.exports = router;
+exports.route = router;

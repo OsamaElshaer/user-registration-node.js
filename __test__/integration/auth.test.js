@@ -1,5 +1,5 @@
 const { User } = require("../../models/User");
-const { dbConnection,client } = require("../../config/database");
+const { dbConnection, clien } = require("../../config/database");
 
 beforeAll(async () => {
   await dbConnection();
@@ -29,5 +29,5 @@ describe("user auth", () => {
 
 afterAll(async () => {
   await User.deleteMany();
-  await client.close()
+  await clien.close();
 });

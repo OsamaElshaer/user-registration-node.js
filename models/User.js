@@ -10,28 +10,24 @@ class User {
     db().collection("users").insertOne(this);
   }
 
-  static findByName(username, cb) {
-    db()
-      .collection("users")
-      .findOne({ username: username })
-      .then((user) => {
-        cb(user);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  static findByName(username) {
+    return db().collection("users").findOne({ username: username });
   }
 
-  static findById(id, cb) {
-    db()
+
+
+  static deleteMany() {
+    return db().collection("users").deleteMany({});
+  }
+
+  static fetchAll() {
+    return db().collection("users").find().toArray();
+  }
+
+  static findById(userId) {
+    return db()
       .collection("users")
-      .findOne({ _id: new mongodb.ObjectId(id) })
-      .then((user) => {
-        cb(user);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+      .findOne({ _id: new mongodb.ObjectId(userId) });
   }
 }
 exports.User = User;

@@ -1,3 +1,4 @@
+const flash = require("express-flash");
 //Import Express
 const express = require("express");
 const app = express();
@@ -10,23 +11,31 @@ require("dotenv").config();
 
 //Import the main Passport and Express-Session library
 const passport = require("passport");
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
 
 //Import the secondary "Strategy" library
 const LocalStrategy = require("passport-local").Strategy;
+const FacebookStrategy = require("passport-facebook").Strategy;
+
+//session
+const session = require("express-session");
+const MongoDBStore = require("connect-mongodb-session")(session);
 
 //tempalte engine
 app.set("view engine", "ejs");
 
 // require methods
-const authRouter = require("./routes/auth");
+const authRouter = require("./routes/auth").route;
 
 //config passport
 
 // The "authUser" is a function that we will define later will contain the steps to authenticate a user, and will return the "authenticated user".
-const { authUser } = require("./config/passport");
+const {
+  authUser,
+  verifyCallback,
+  strategyOptions,
+} = require("./config/passport");
 passport.use(new LocalStrategy(authUser));
+// passport.use(new FacebookStrategy(strategyOptions,verifyCallback))
 
 passport.serializeUser((user, done) => {
   done(null, user);
@@ -38,7 +47,7 @@ passport.deserializeUser((user, done) => {
 
 //middleware
 app.use(express.urlencoded({ extended: true }));
-
+app.use(flash());
 let store = new MongoDBStore({
   uri: "mongodb://localhost:27017/userManagment",
   collection: "session",
@@ -68,6 +77,6 @@ app.use(passport.session());
 app.use("/", authRouter);
 
 dbConnection((database) => {
-  // console.log(database)
+  // if (database) console.log("connected to database");
   app.listen(3000);
 });

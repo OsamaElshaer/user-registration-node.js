@@ -11,10 +11,8 @@ async function dbConnection(cb) {
   await clien.connect();
   database = clien.db(dbName);
   cb(database)
+
 }
-
-
-
 
 function db() {
   if (!database) {
@@ -23,7 +21,8 @@ function db() {
   return database;
 }
 
-module.exports={
-    dbConnection,
-    db
-}
+module.exports = {
+  dbConnection,
+  db,
+  clien,
+};
